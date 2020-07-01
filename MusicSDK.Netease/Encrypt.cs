@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Security.Cryptography;
 using System.Numerics;
 using MusicSDK.Netease.Library;
+using System.IO;
 
 namespace MusicSDK.Netease
 {
@@ -16,9 +17,7 @@ namespace MusicSDK.Netease
         static readonly byte[] IV = Encoding.UTF8.GetBytes("0102030405060708");
         static readonly byte[] PCKey = Encoding.UTF8.GetBytes("e82ckenh8dichen8");
 
-        // const string PUBKEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB";
-        const string PUBKEY_M = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7";
-        const string PUBKEY_E = "010001";
+        const string PUBKEY = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB\n-----END PUBLIC KEY-----";
 
 
         static Random random = new Random();
@@ -88,7 +87,6 @@ namespace MusicSDK.Netease
             var aes = Aes.Create();
             aes.Key = Key;
             aes.BlockSize = 128;
-            System.IO.File.WriteAllBytes("/home/kevin/Projects/Fangzi.Telegram.Bot/ApiTest/song.dat", source);
             aes.IV = IV ?? Enumerable.Repeat((byte)0, aes.IV.Length).ToArray();
             aes.Mode = Mode;
             using var decryptor = aes.CreateDecryptor();
@@ -96,13 +94,14 @@ namespace MusicSDK.Netease
             return Encoding.UTF8.GetString(result);
         }
 
-        static string rsaEncrypt(IEnumerable<byte> text, string E = PUBKEY_E, string M = PUBKEY_M)
+        static string rsaEncrypt(IEnumerable<byte> text, string publicKey = PUBKEY)
         {
             var hexText = text.Reverse().ToHexString();
+            var rsaParams = RSAUtility.Parse(publicKey);
             var hexRet = BigInteger.ModPow(
                 BigInteger.Parse("0" + hexText, NumberStyles.HexNumber),
-                BigInteger.Parse("0" + E, NumberStyles.HexNumber),
-                BigInteger.Parse("0" + M, NumberStyles.HexNumber)
+                BigInteger.Parse("0" + rsaParams.Exponent.ToHexString(), NumberStyles.HexNumber),
+                BigInteger.Parse("0" + rsaParams.Modulus.ToHexString(), NumberStyles.HexNumber)
             );
             return hexRet.ToString("x2").TrimStart('0').PadLeft(256, '0');
         }
@@ -112,7 +111,94 @@ namespace MusicSDK.Netease
             using var md5 = MD5.Create();
             byte[] bs = Encoding.UTF8.GetBytes(text);
             byte[] retBs = md5.ComputeHash(bs);
-            return retBs.ToHexString("x2");
+            return retBs.ToHexString(false);
+        }
+    }
+
+
+    public static class RSAUtility
+    {
+        static readonly Dictionary<string, RSAParameters> cache = new Dictionary<string, RSAParameters>();
+        public static RSAParameters Parse(string publicKey)
+        {
+            if (cache.TryGetValue(publicKey, out var c))
+            {
+                return c;
+            }
+            var _publicKey = publicKey.Replace("\n", string.Empty);
+            _publicKey = _publicKey.Substring(26, _publicKey.Length - 50);
+            using (MemoryStream _stream = new MemoryStream(Convert.FromBase64String(_publicKey)))
+            {
+                using (BinaryReader _reader = new BinaryReader(_stream))
+                {
+                    ushort _i16;
+                    byte[] _oid;
+                    byte _i8;
+                    byte _low;
+                    byte _high;
+                    int _modulusLength;
+                    byte[] _modulus;
+                    int _exponentLength;
+                    byte[] _exponent;
+
+                    _i16 = _reader.ReadUInt16();
+                    if (_i16 == 0x8130)
+                        _reader.ReadByte();
+                    else if (_i16 == 0x8230)
+                        _reader.ReadInt16();
+                    else
+                        throw new ArgumentException(nameof(_publicKey));
+                    _oid = _reader.ReadBytes(15);
+                    if (!_oid.SequenceEqual(new byte[] { 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01, 0x05, 0x00 }))
+                        throw new ArgumentException(nameof(_publicKey));
+                    _i16 = _reader.ReadUInt16();
+                    if (_i16 == 0x8103)
+                        _reader.ReadByte();
+                    else if (_i16 == 0x8203)
+                        _reader.ReadInt16();
+                    else
+                        throw new ArgumentException(nameof(_publicKey));
+                    _i8 = _reader.ReadByte();
+                    if (_i8 != 0x00)
+                        throw new ArgumentException(nameof(_publicKey));
+                    _i16 = _reader.ReadUInt16();
+                    if (_i16 == 0x8130)
+                        _reader.ReadByte();
+                    else if (_i16 == 0x8230)
+                        _reader.ReadInt16();
+                    else
+                        throw new ArgumentException(nameof(_publicKey));
+                    _i16 = _reader.ReadUInt16();
+                    if (_i16 == 0x8102)
+                    {
+                        _high = 0;
+                        _low = _reader.ReadByte();
+                    }
+                    else if (_i16 == 0x8202)
+                    {
+                        _high = _reader.ReadByte();
+                        _low = _reader.ReadByte();
+                    }
+                    else
+                        throw new ArgumentException(nameof(_publicKey));
+                    _modulusLength = BitConverter.ToInt32(new byte[] { _low, _high, 0x00, 0x00 }, 0);
+                    if (_reader.PeekChar() == 0x00)
+                    {
+                        _reader.ReadByte();
+                        _modulusLength -= 1;
+                    }
+                    _modulus = _reader.ReadBytes(_modulusLength);
+                    if (_reader.ReadByte() != 0x02)
+                        throw new ArgumentException(nameof(_publicKey));
+                    _exponentLength = _reader.ReadByte();
+                    _exponent = _reader.ReadBytes(_exponentLength);
+                    return new RSAParameters
+                    {
+                        Modulus = _modulus,
+                        Exponent = _exponent
+                    };
+                }
+            }
         }
     }
 }

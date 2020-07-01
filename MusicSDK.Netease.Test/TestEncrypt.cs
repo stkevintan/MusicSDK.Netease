@@ -24,7 +24,7 @@ namespace MusicSDK.Netease.Test
             var text = File.ReadAllText(getPath("pc_encrypt_lyric.in"));
             var actual = Encrypt.EncryptPCRequest("/eapi/song/lyric", text)["params"];
             var expect = File.ReadAllText(getPath("pc_encrypt_lyric.out"));
-            Assert.AreEqual(actual, expect);
+            Assert.AreEqual(expect, actual);
         }
 
         [TestMethod]
@@ -33,8 +33,8 @@ namespace MusicSDK.Netease.Test
             var data = File.ReadAllText(getPath("web_encrypt_data.in"));
             var secKey = File.ReadAllBytes(getPath("web_encrypt_secKey.in"));
             var actual = Encrypt.EncryptWebRequest(data, secKey);
-            Assert.AreEqual(actual["params"], File.ReadAllText(getPath("web_encrypt_params.out")));
-            Assert.AreEqual(actual["encSecKey"], File.ReadAllText(getPath("web_encrypt_encSecKey.out")));
+            Assert.AreEqual(File.ReadAllText(getPath("web_encrypt_params.out")), actual["params"]);
+            Assert.AreEqual(File.ReadAllText(getPath("web_encrypt_encSecKey.out")), actual["encSecKey"]);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +21,9 @@ namespace MusicSDK.Netease.Library
             return (from kv in dict where kv.Value != null select kv).ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
-        public static string ToHexString(this IEnumerable<byte> bytes, string? format = "X2")
+        public static string ToHexString(this IEnumerable<byte> bytes, bool upperCase = true)
         {
-            return String.Join("", from c in bytes select ((int)c).ToString(format));
+            return String.Join("", from c in bytes select ((int)c).ToString(upperCase ? "X2" : "x2"));
         }
     }
 }
