@@ -35,10 +35,20 @@ namespace MusicSDK.Netease.Test
         }
 
         [TestMethod]
-        public async Task ShouldCookieMaintainered()
+        public async Task ShouldCookieLives()
         {
             await Context.EnsureLogined();
             var ret = await Context.Api.SearchAsync<Song>("A");
+        }
+
+        [TestMethod]
+        public async Task ShouldLogoutWorks()
+        {
+            var api = new NeteaseMusicSDK();
+            await api.LoginAsync(Configuration.Username, Configuration.Password);
+            Assert.IsNotNull(api.Me);
+            await api.LogoutAsync();
+            Assert.IsNull(api.Me);
         }
     }
 }

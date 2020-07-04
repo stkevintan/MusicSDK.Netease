@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using MusicSDK.Netease.Library;
 
 /*
@@ -130,9 +129,5 @@ namespace MusicSDK.Netease.Models
         public string Type { get; set; }
 
         public List<string> Tns { get; set; }
-
-        [JsonExtensionData]
-        private Dictionary<string, JToken> raw { get; set; } = new Dictionary<string, JToken>();
-
     }
 }

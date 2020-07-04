@@ -88,21 +88,21 @@ namespace MusicSDK.Netease
         /// </summary>
         /// <param name="Id">Song's id</param>
         /// <returns>Song's detail</returns>
-        Task<SongDetail> SongDetail(long Id);
+        Task<SongDetail> SongDetailAsync(long Id);
 
         /// <summary>
         /// Batch get songs' details
         /// </summary>
         /// <param name="Ids">Songs' id list</param>
         /// <returns>Songs' detail</returns>
-        Task<List<SongDetail>> SongDetail(List<long> Ids);
+        Task<List<SongDetail>> SongDetailAsync(List<long> Ids);
 
         /// <summary>
         /// Get album's details
         /// </summary>
         /// <param name="Id">Album's id</param>
         /// <returns>Album</returns>
-        Task<Album> AlbumDetail(long Id);
+        Task<Album> AlbumDetailAsync(long Id);
 
         /// <summary>
         /// Artist's Album list
@@ -111,20 +111,20 @@ namespace MusicSDK.Netease
         /// <param name="offset">Query offset, default: 0</param>
         /// <param name="limit">Query limit, default 50</param>
         /// <returns>Artist's albums</returns>
-        Task<List<Album>> ArtistAlbum(long Id, int offset = 0, int limit = 30);
+        Task<List<Album>> ArtistAlbumAsync(long Id, int offset = 0, int limit = 30);
 
         /// <summary>
         /// Artist Description
         /// </summary>
         /// <param name="Id">Artist id</param>
         /// <returns>Artist's descriptions</returns>
-        Task<ArtistDesc> ArtistDesc(long Id);
+        Task<ArtistDesc> ArtistDescAsync(long Id);
 
         /// <summary>
         /// Hot 50 songs for a artist
         /// </summary>
         /// <param name="Id">Artist's id</param>
         /// <returns>Song's details</returns>
-        Task<List<SongDetail>> ArtistTopSongs(long Id);
+        Task<List<SongDetail>> ArtistTopSongsAsync(long Id);
     }
 }

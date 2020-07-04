@@ -119,36 +119,50 @@ namespace MusicSDK.Netease.Test
         [TestMethod]
         public async Task ShouldSongDetailWork()
         {
-            var ret = await Context.Api.SongDetail(29829683);
+            var ret = await Context.Api.SongDetailAsync(29829683);
             Assert.IsNotNull(ret);
-            var rlist = await Context.Api.SongDetail(new List<long>() { 29829683, 29307041 });
+            var rlist = await Context.Api.SongDetailAsync(new List<long>() { 29829683, 29307041 });
             Assert.IsTrue(rlist.Count == 2);
         }
 
         [TestMethod]
         public async Task ShouldAlbumDetailWork()
         {
-            var ret = await Context.Api.AlbumDetail(3086101);
+            var ret = await Context.Api.AlbumDetailAsync(3086101);
             Assert.IsTrue(ret.Songs.Count > 0);
         }
 
         [TestMethod]
         public async Task ShouldArtistAlbumWork()
         {
-            var ret = await Context.Api.ArtistAlbum(15988, 0, 2);
+            var ret = await Context.Api.ArtistAlbumAsync(15988, 0, 2);
             Assert.IsTrue(ret.Count > 0);
         }
 
         [TestMethod]
         public async Task ShouldArtistDescWork()
         {
-            var ret = await Context.Api.ArtistDesc(15988);
+            await Context.Api.ArtistDescAsync(15988);
         }
 
         [TestMethod]
         public async Task ShouldArtistTopSongsWork()
         {
-            var ret = await Context.Api.ArtistTopSongs(15988);
+            await Context.Api.ArtistTopSongsAsync(15988);
+        }
+
+        [TestMethod]
+        public async Task ShouldPlaylistDetailWork()
+        {
+            await Context.EnsureLogined();
+            await Context.Api.PlaylistDetailAsync(24795857);
+            // {"code":200,"relatedVideos":null,"playlist":{"subscribers":[],"subscribed":false,"creator":null,"tracks":[],"trackIds":[],"updateFrequency":null,"backgroundCoverId":0,"backgroundCoverUrl":null,"titleImage":0,"titleImageUrl":null,"englishTitle":null,"opRecommend":false,"ordered":false,"trackNumberUpdateTime":0,"adType":0,"description":null,"status":0,"tags":[],"subscribedCount":0,"cloudTrackCount":0,"userId":40027322,"createTime":1413805008607,"highQuality":false,"coverImgUrl":"https://p4.music.126.net/EWC8bPR8WW9KvhaftdmsXQ==/3397490930543093.jpg","coverImgId":3397490930543093,"specialType":5,"updateTime":1413805008607,"commentThreadId":"A_PL_0_33287225","privacy":0,"trackUpdateTime":1413805013226,"trackCount":0,"newImported":false,"playCount":0,"name":"我喜欢的音乐","id":33287225,"shareCount":0,"commentCount":0},"urls":null,"privileges":null}
+        }
+
+        [TestMethod]
+        public async Task ShouldResourceExposureWork()
+        {
+            await Context.Api.ResourceExposure(492076397);
         }
     }
 }

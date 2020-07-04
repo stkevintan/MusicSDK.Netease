@@ -1,4 +1,10 @@
 using MusicSDK.Netease.Library;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 
 
 #nullable disable
@@ -28,5 +34,41 @@ namespace MusicSDK.Netease.Models
         public int TrackCount { get; set; }
 
         public long UserId { get; set; }
+    }
+
+    public class PlaylistDetail : Playlist
+    {
+        public string BackgroundCoverUrl { get; set; }
+        public int CommentCount { get; set; }
+
+        [JsonConverter(typeof(DateConverter))]
+        public DateTime CreateTime { get; set; }
+
+        [JsonConverter(typeof(DateConverter))]
+        public DateTime UpdateTime { get; set; }
+
+        public int Privacy { get; set; }
+
+        /// <summary>
+        /// Song details, limit by parameters
+        /// </summary>
+        public List<SongDetail> Tracks { get; set; }
+
+        /// <summary>
+        /// full song id list, no-limit
+        /// </summary>
+        [JsonIgnore]
+        public List<long> TrackIds { get; set; }
+
+        [JsonExtensionData]
+        private Dictionary<string, JToken> _raw = new Dictionary<string, JToken>();
+
+        [OnDeserialized]
+        private void OnDeserialized(StreamingContext ctx)
+        {
+            if (_raw.TryGetValue("trackIds", out var token)) {
+                TrackIds = token.Children().Select(x => (long)x["id"]).ToList();
+            }
+        }
     }
 }

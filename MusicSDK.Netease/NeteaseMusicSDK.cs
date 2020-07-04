@@ -110,12 +110,20 @@ namespace MusicSDK.Netease
         public async Task LoginRefreshAsync()
         {
             var url = "/weapi/login/token/refresh";
-            var res = await Request(url).Into();
+            await Request(url).Into();
+        }
+
+        public async Task LogoutAsync()
+        {
+            var url = "/weapi/logout";
+            await Request(url).Into();
+            storage?.ClearSession();
+            Me = null;
         }
 
         public async Task<ListResult<T>> SearchAsync<T>(string keyword, int offset = 0, bool total = true, int limit = 50) where T : BaseModel
         {
-            var url = "/weapi/search/get";
+            var url = "/eapi/cloudsearch/pc";
             var type = typeof(T);
             EntityInfoAttribute? entityInfo = (EntityInfoAttribute?)Attribute.GetCustomAttribute(type, typeof(EntityInfoAttribute));
             if (entityInfo == null)
@@ -155,9 +163,9 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret).Point;
         }
 
-        public async Task<List<Playlist>> UserPlaylistAsync(long Id, int offset = 0, int limit = 50)
+        public async Task<List<Playlist>> UserPlaylistAsync(long Id, int offset = 0, int limit = 1000)
         {
-            var path = "/weapi/user/playlist";
+            var path = "/eapi/user/playlist";
             var body = new Dictionary<string, object> {
                 {"uid", Id},
                 {"offset", offset},
@@ -194,9 +202,6 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret?.Data);
         }
 
-        /// <summary>
-        ///  Get Song's playback url
-        /// </summary>
         public async Task<SongUrl> SongUrlAsync(long Id, int br = 999000)
         {
             var path = "/eapi/song/enhance/player/url";
@@ -233,7 +238,7 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret);
         }
 
-        public async Task<SongDetail> SongDetail(long Id)
+        public async Task<SongDetail> SongDetailAsync(long Id)
         {
             var path = "/weapi/v3/song/detail";
             var body = new Dictionary<string, object> {
@@ -244,7 +249,7 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret?.Songs?.FirstOrDefault());
         }
 
-        public async Task<List<SongDetail>> SongDetail(List<long> Ids)
+        public async Task<List<SongDetail>> SongDetailAsync(List<long> Ids)
         {
             var path = "/weapi/v3/song/detail";
             var body = new Dictionary<string, object> {
@@ -255,7 +260,7 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret?.Songs);
         }
 
-        public async Task<Album> AlbumDetail(long Id)
+        public async Task<Album> AlbumDetailAsync(long Id)
         {
             var path = $"/weapi/v1/album/{Id}";
             var ret = await Request(path).Into(new { Album = default(Album), Songs = default(List<SongDetail>) });
@@ -267,7 +272,7 @@ namespace MusicSDK.Netease
             throw new NullReferenceException();
         }
 
-        public async Task<List<Album>> ArtistAlbum(long Id, int offset = 0, int limit = 30)
+        public async Task<List<Album>> ArtistAlbumAsync(long Id, int offset = 0, int limit = 30)
         {
             var path = $"/weapi/artist/albums/{Id}";
             var body = new Dictionary<string, object>
@@ -280,7 +285,7 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret?.HotAlbums);
         }
 
-        public async Task<ArtistDesc> ArtistDesc(long Id)
+        public async Task<ArtistDesc> ArtistDescAsync(long Id)
         {
             var path = $"/weapi/artist/introduction";
             var body = new Dictionary<string, object> {
@@ -290,14 +295,46 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret);
         }
 
-        public async Task<List<SongDetail>> ArtistTopSongs(long Id)
+        public async Task<List<SongDetail>> ArtistTopSongsAsync(long Id)
         {
-            var path = $"/weapi/artist/top/song";
+            var path = "/weapi/artist/top/song";
             var body = new Dictionary<string, object> {
                 {"id", Id}
             };
             var ret = await Request(path, body).Into(new { Songs = default(List<SongDetail>) });
             return Utility.AssertNotNull(ret?.Songs);
+        }
+
+
+        public async Task PlaylistDetailAsync(long Id)
+        {
+            var path = "/eapi/v6/playlist/detail";
+            var body = new Dictionary<string, object>
+            {
+                {"id", Id},
+                {"t", -1 },
+                {"n", 500},
+                {"s", 0 }
+            };
+            var ret = await Request(path, body).Into(new { 
+                Playlist = default(PlaylistDetail),
+                Privileges = default(List<Privilege>)
+            });
+        }
+
+        
+        /// <summary>
+        /// unknown usage
+        /// </summary>
+        public async Task ResourceExposure(long Id)
+        {
+            var path = "/eapi/resource-exposure/config";
+            var body = new Dictionary<string, object>
+            {
+                {"resourcePosition", "playlist" },
+                {"resourceId", Id }
+            };
+            var ret = await Request(path, body).Into();
         }
         #endregion API
     }
