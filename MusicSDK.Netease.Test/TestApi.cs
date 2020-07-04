@@ -12,14 +12,14 @@ namespace MusicSDK.Netease.Test
         [TestMethod]
         public async Task ShouldSearchSongWork()
         {
-            var ret = await Context.Api.SearchAsync<Song>("A");
+            var ret = await Context.Api.SearchAsync<Song>("灰色と青");
             Assert.IsNotNull(ret.Items);
         }
 
         [TestMethod]
         public async Task ShouldSearchAlbumWork()
         {
-            var ret = await Context.Api.SearchAsync<Album>("A");
+            var ret = await Context.Api.SearchAsync<Album>("황진이 OST");
             Assert.IsNotNull(ret.Items);
         }
 
@@ -79,15 +79,17 @@ namespace MusicSDK.Netease.Test
         public async Task ShouldUserPlaylistWork()
         {
             var user = await Context.EnsureLogined();
-            var plist = await Context.Api.UserPlaylistAsync(user.Id);
+            await Context.Api.UserPlaylistAsync(user.Id);
         }
 
         [TestMethod]
-        public async Task ShouldPersonalFmWork()
+        public async Task ShouldPersonalRadioWork()
         {
             await Context.EnsureLogined();
-            var ret = await Context.Api.PersonalFmAsync();
+            var ret = await Context.Api.PersonalRadioAsync();
             Assert.IsTrue(ret.Count > 0);
+            Assert.IsNotNull(ret[0].Album);
+            Assert.IsNotNull(ret[0].Artists?[0]);
         }
 
         [TestMethod]
@@ -96,7 +98,7 @@ namespace MusicSDK.Netease.Test
             // await Context.EnsureLogined();
             // ALiz: 29307041
             var ret = await Context.Api.SongUrlAsync(29307041);
-            var ret2 = await Context.Api.SongUrlAsync(29307041, (int)SongQuality.HD);
+            var ret2 = await Context.Api.SongUrlAsync(29307041, (int)SongQuality.HQ);
             Assert.AreEqual(ret.Quality, ret2.Quality);
             Assert.IsNull(ret.FreeTrialInfo);
 
@@ -114,12 +116,18 @@ namespace MusicSDK.Netease.Test
         {
             // await Context.EnsureLogined();
             var ret = await Context.Api.SongLyricAsync(29829683);
+            Assert.IsFalse(ret.Nolyric);
+            Assert.IsNotNull(ret.Lrc.lyric);
+
+            var ret1 = await Context.Api.SongLyricAsync(442457);
+            Assert.IsTrue(ret1.Nolyric);
+            Assert.IsNull(ret1.Lrc);
         }
 
         [TestMethod]
         public async Task ShouldSongDetailWork()
         {
-            var ret = await Context.Api.SongDetailAsync(29829683);
+            var ret = await Context.Api.SongDetailAsync(442454);
             Assert.IsNotNull(ret);
             var rlist = await Context.Api.SongDetailAsync(new List<long>() { 29829683, 29307041 });
             Assert.IsTrue(rlist.Count == 2);
@@ -128,8 +136,18 @@ namespace MusicSDK.Netease.Test
         [TestMethod]
         public async Task ShouldAlbumDetailWork()
         {
-            var ret = await Context.Api.AlbumDetailAsync(3086101);
-            Assert.IsTrue(ret.Songs.Count > 0);
+            var (album, songs) = await Context.Api.AlbumDetailAsync(36529043);
+            Assert.IsNotNull(album);
+            Assert.IsTrue(songs.Count > 0);
+            // Privilege should not avaliable
+            Assert.IsNull(songs[0].Privilege);
+        }
+
+        [TestMethod]
+        public async Task ShouldAlbumPrivilegeWork()
+        {
+            var privilege = await Context.Api.AlbumPrivilegeAsync(36529043);
+            Assert.IsNotNull(privilege);
         }
 
         [TestMethod]
@@ -156,7 +174,6 @@ namespace MusicSDK.Netease.Test
         {
             await Context.EnsureLogined();
             await Context.Api.PlaylistDetailAsync(24795857);
-            // {"code":200,"relatedVideos":null,"playlist":{"subscribers":[],"subscribed":false,"creator":null,"tracks":[],"trackIds":[],"updateFrequency":null,"backgroundCoverId":0,"backgroundCoverUrl":null,"titleImage":0,"titleImageUrl":null,"englishTitle":null,"opRecommend":false,"ordered":false,"trackNumberUpdateTime":0,"adType":0,"description":null,"status":0,"tags":[],"subscribedCount":0,"cloudTrackCount":0,"userId":40027322,"createTime":1413805008607,"highQuality":false,"coverImgUrl":"https://p4.music.126.net/EWC8bPR8WW9KvhaftdmsXQ==/3397490930543093.jpg","coverImgId":3397490930543093,"specialType":5,"updateTime":1413805008607,"commentThreadId":"A_PL_0_33287225","privacy":0,"trackUpdateTime":1413805013226,"trackCount":0,"newImported":false,"playCount":0,"name":"我喜欢的音乐","id":33287225,"shareCount":0,"commentCount":0},"urls":null,"privileges":null}
         }
 
         [TestMethod]

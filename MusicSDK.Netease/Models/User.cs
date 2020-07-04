@@ -7,7 +7,7 @@ using MusicSDK.Netease.Library;
 namespace MusicSDK.Netease.Models
 {
     [EntityInfo(1002, Name = "Userprofile")]
-    public class User : BaseModel
+    public class User : IBaseModel
     {
         [JsonProperty(PropertyName = "userId")]
         public long Id { get; set; }

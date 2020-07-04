@@ -44,5 +44,6 @@ namespace MusicSDK.Netease.Models
 
         public Lyric Tlyric { get; set; }
 
+        public bool Nolyric { get; set; } = false;
     }
 }

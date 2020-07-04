@@ -9,10 +9,12 @@ namespace MusicSDK.Netease.Models
     {
         public List<T> Items { get; set; }
 
+        public bool HasMore { get; set; }
+
         public int Count { get; set; }
     }
 
-    public interface BaseModel
+    public interface IBaseModel
     {
         long Id { get; set; }
 

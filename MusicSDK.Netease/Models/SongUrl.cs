@@ -65,9 +65,10 @@ namespace MusicSDK.Netease.Models
 {
     public enum SongQuality
     {
-        HD = 320000,
-        MD = 192000,
-        LD = 128000
+        SQ = 999000,
+        HQ = 320000,
+        MQ = 192000,
+        LQ = 128000
     }
 
 
@@ -97,14 +98,15 @@ namespace MusicSDK.Netease.Models
 
         public FreeTrialInfo FreeTrialInfo { get; set; }
 
-        public SongQuality Quality { get; set; } = SongQuality.LD;
+        public SongQuality Quality { get; set; } = SongQuality.LQ;
 
         [OnDeserialized]
-        private void onDeserialized(StreamingContext context)
+        private void OnDeserialized(StreamingContext context)
         {
-            if (Br >= (int)SongQuality.HD) Quality = SongQuality.HD;
-            else if (Br >= (int)SongQuality.MD) Quality = SongQuality.MD;
-            else Quality = SongQuality.LD;
+            if (Br >= (int)SongQuality.SQ) Quality = SongQuality.SQ;
+            else if (Br >= (int)SongQuality.HQ) Quality = SongQuality.HQ;
+            else if (Br >= (int)SongQuality.MQ) Quality = SongQuality.MQ;
+            else Quality = SongQuality.LQ;
         }
 
     }

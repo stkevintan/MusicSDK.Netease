@@ -11,7 +11,7 @@ using System.Runtime.Serialization;
 namespace MusicSDK.Netease.Models
 {
     [EntityInfo(1000)]
-    public class Playlist : BaseModel
+    public class Playlist : IBaseModel
     {
         public long Id { get; set; }
 
@@ -52,7 +52,7 @@ namespace MusicSDK.Netease.Models
         /// <summary>
         /// Song details, limit by parameters
         /// </summary>
-        public List<SongDetail> Tracks { get; set; }
+        public List<Song> Tracks { get; set; }
 
         /// <summary>
         /// full song id list, no-limit
@@ -61,7 +61,7 @@ namespace MusicSDK.Netease.Models
         public List<long> TrackIds { get; set; }
 
         [JsonExtensionData]
-        private Dictionary<string, JToken> _raw = new Dictionary<string, JToken>();
+        private readonly Dictionary<string, JToken> _raw = new Dictionary<string, JToken>();
 
         [OnDeserialized]
         private void OnDeserialized(StreamingContext ctx)

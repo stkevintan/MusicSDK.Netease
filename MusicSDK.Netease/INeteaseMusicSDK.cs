@@ -28,7 +28,7 @@ namespace MusicSDK.Netease
         /// <param name="limit">Query limit, default: 50</param>
         /// <typeparam name="T">Only `Song`, `Playlist`, `Artist`, `Album` and `User` are supported</typeparam>
         /// <returns>Result of search</returns>
-        Task<ListResult<T>> SearchAsync<T>(string keyword, int offset = 0, bool total = true, int limit = 50) where T : BaseModel;
+        Task<ListResult<T>> SearchAsync<T>(string keyword, int offset = 0, bool total = true, int limit = 50) where T : IBaseModel;
 
         /// <summary>
         /// Do the daily task
@@ -51,13 +51,13 @@ namespace MusicSDK.Netease
         /// </summary>
         /// <typeparam name="T">Only Playlist and Song are valid</typeparam>
         /// <returns>Playlists or Songs</returns>
-        Task<List<T>> RecommendAsync<T>() where T : BaseModel;
+        Task<List<T>> RecommendAsync<T>() where T : IBaseModel;
 
         /// <summary>
         /// Get 3 personal fm songs
         /// </summary>
         /// <returns>Songs</returns>
-        Task<List<Song>> PersonalFmAsync();
+        Task<List<Song>> PersonalRadioAsync();
 
         /// <summary>
         /// Get a song's audio url
@@ -88,21 +88,21 @@ namespace MusicSDK.Netease
         /// </summary>
         /// <param name="Id">Song's id</param>
         /// <returns>Song's detail</returns>
-        Task<SongDetail> SongDetailAsync(long Id);
+        Task<Song> SongDetailAsync(long Id);
 
         /// <summary>
         /// Batch get songs' details
         /// </summary>
         /// <param name="Ids">Songs' id list</param>
         /// <returns>Songs' detail</returns>
-        Task<List<SongDetail>> SongDetailAsync(List<long> Ids);
+        Task<List<Song>> SongDetailAsync(List<long> Ids);
 
         /// <summary>
         /// Get album's details
         /// </summary>
         /// <param name="Id">Album's id</param>
         /// <returns>Album</returns>
-        Task<Album> AlbumDetailAsync(long Id);
+        Task<(Album, List<Song>)> AlbumDetailAsync(long Id);
 
         /// <summary>
         /// Artist's Album list
@@ -125,6 +125,9 @@ namespace MusicSDK.Netease
         /// </summary>
         /// <param name="Id">Artist's id</param>
         /// <returns>Song's details</returns>
-        Task<List<SongDetail>> ArtistTopSongsAsync(long Id);
+        Task<List<Song>> ArtistTopSongsAsync(long Id);
+        Task<(PlaylistDetail, List<Privilege>)> PlaylistDetailAsync(long Id);
+        Task ResourceExposure(long Id);
+        Task<List<Privilege>> AlbumPrivilegeAsync(long Id, int offset = 0, int limit = 500);
     }
 }

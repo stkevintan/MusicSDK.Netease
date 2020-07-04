@@ -14,11 +14,9 @@ namespace MusicSDK.Netease
 {
     public class NeteaseMusicSDK : INeteaseMusicSDK, IDisposable
     {
-        CookieContainer cookieJar;
-
-        IStorage? storage;
-
-        List<RequestProvider> requestProviders = new List<RequestProvider>();
+        readonly CookieContainer cookieJar;
+        readonly IStorage? storage;
+        readonly List<RequestProvider> requestProviders = new List<RequestProvider>();
 
         public User? Me { get; private set; }
 
@@ -39,11 +37,11 @@ namespace MusicSDK.Netease
             {
                 cookieJar = new CookieContainer();
             }
-            initRequestProviders();
+            InitRequestProviders();
 
-            checkSession();
+            CheckSession();
         }
-        void initRequestProviders()
+        void InitRequestProviders()
         {
             var rType = typeof(RequestProvider);
             var assembly = Assembly.GetAssembly(rType)!;
@@ -53,7 +51,7 @@ namespace MusicSDK.Netease
                 requestProviders.Add((RequestProvider)Activator.CreateInstance(t, cookieJar)!);
             }
         }
-        void checkSession()
+        void CheckSession()
         {
             foreach (var rp in requestProviders)
             {
@@ -121,7 +119,7 @@ namespace MusicSDK.Netease
             Me = null;
         }
 
-        public async Task<ListResult<T>> SearchAsync<T>(string keyword, int offset = 0, bool total = true, int limit = 50) where T : BaseModel
+        public async Task<ListResult<T>> SearchAsync<T>(string keyword, int offset = 0, bool total = true, int limit = 50) where T : IBaseModel
         {
             var url = "/eapi/cloudsearch/pc";
             var type = typeof(T);
@@ -151,7 +149,10 @@ namespace MusicSDK.Netease
                         }
                     }
                 });
-            return Utility.AssertNotNull(res?.Result);
+
+            var result = Utility.AssertNotNull(res.Result);
+            result.Count = result.Count == 0 ? result.Items.Count : result.Count;
+            return result;
         }
 
         public async Task<int> DailyTaskAsync(bool isMobile = true)
@@ -159,8 +160,7 @@ namespace MusicSDK.Netease
             var path = "/weapi/point/dailyTask";
             var body = new Dictionary<string, object> { { "type", isMobile ? 0 : 1 } };
             var ret = await Request(path, body).Into(new { Point = default(int) });
-            //"{\"point\":4,\"code\":200}"
-            return Utility.AssertNotNull(ret).Point;
+            return ret.Point;
         }
 
         public async Task<List<Playlist>> UserPlaylistAsync(long Id, int offset = 0, int limit = 1000)
@@ -172,10 +172,10 @@ namespace MusicSDK.Netease
                 {"limit", limit},
             };
             var ret = await Request(path, body).Into(new { Playlist = default(List<Playlist>) });
-            return Utility.AssertNotNull(ret?.Playlist);
+            return Utility.AssertNotNull(ret.Playlist);
         }
 
-        public async Task<List<T>> RecommendAsync<T>() where T : BaseModel
+        public async Task<List<T>> RecommendAsync<T>() where T : IBaseModel
         {
             var type = typeof(T);
             var path = "/weapi/v1/discovery/recommend";
@@ -192,17 +192,17 @@ namespace MusicSDK.Netease
                 throw new NotSupportedException($"Recommend {type.Name} is not supported");
             }
             var ret = await Request(path).Into(new { Recommend = default(List<T>) });
-            return Utility.AssertNotNull(ret?.Recommend);
+            return Utility.AssertNotNull(ret.Recommend);
         }
 
-        public async Task<List<Song>> PersonalFmAsync()
+        public async Task<List<Song>> PersonalRadioAsync()
         {
-            var path = "/weapi/v1/radio/get";
-            var ret = await Request(path).Into(new { Data = default(List<Song>) });
-            return Utility.AssertNotNull(ret?.Data);
+            var path = "/eapi/v1/radio/get";
+            var ret = await Request(path).Into(new { Data = default(List<SongLegacy>) });
+            return Utility.AssertNotNull(ret?.Data.Select(x => (Song)x).ToList());
         }
 
-        public async Task<SongUrl> SongUrlAsync(long Id, int br = 999000)
+        public async Task<SongUrl> SongUrlAsync(long Id, int br = (int)SongQuality.SQ)
         {
             var path = "/eapi/song/enhance/player/url";
             var body = new Dictionary<string, object> {
@@ -210,10 +210,10 @@ namespace MusicSDK.Netease
                 {"br", br}
             };
             var ret = await Request(path, body).Into(new { Data = default(List<SongUrl>) });
-            return Utility.AssertNotNull(ret?.Data?.FirstOrDefault());
+            return Utility.AssertNotNull(ret.Data?.FirstOrDefault());
         }
 
-        public async Task<List<SongUrl>> SongUrlAsync(List<long> IdList, int br = 999000)
+        public async Task<List<SongUrl>> SongUrlAsync(List<long> IdList, int br = (int)SongQuality.SQ)
         {
             var path = "/eapi/song/enhance/player/url";
             var body = new Dictionary<string, object> {
@@ -221,7 +221,7 @@ namespace MusicSDK.Netease
                 {"br", br}
             };
             var ret = await Request(path, body).Into(new { Data = default(List<SongUrl>) });
-            return Utility.AssertNotNull(ret?.Data);
+            return Utility.AssertNotNull(ret.Data);
         }
 
         public async Task<SongLyric> SongLyricAsync(long Id)
@@ -235,41 +235,57 @@ namespace MusicSDK.Netease
                 {"tv", -1},
             };
             var ret = await Request(path, body).Into<SongLyric>();
-            return Utility.AssertNotNull(ret);
+            return ret;
         }
 
-        public async Task<SongDetail> SongDetailAsync(long Id)
+        public async Task<Song> SongDetailAsync(long Id)
         {
+            // lack of privilege info.
             var path = "/weapi/v3/song/detail";
             var body = new Dictionary<string, object> {
                 {"c", $"[{{\"id\": {Id}}}]"},
                 {"ids", $"[{Id}]"}
             };
-            var ret = await Request(path, body).Into(new { Songs = default(List<SongDetail>) });
-            return Utility.AssertNotNull(ret?.Songs?.FirstOrDefault());
+            var ret = await Request(path, body).Into(new { Songs = default(List<Song>) });
+            return Utility.AssertNotNull(ret.Songs?.FirstOrDefault());
         }
 
-        public async Task<List<SongDetail>> SongDetailAsync(List<long> Ids)
+        public async Task<List<Song>> SongDetailAsync(List<long> Ids)
         {
+            // lack of privilege info.
             var path = "/weapi/v3/song/detail";
             var body = new Dictionary<string, object> {
                 {"c", $"[{String.Join(',', Ids.Select(id => $"{{\"id\": {id}}}"))}]"},
                 {"ids", $"[{String.Join(',', Ids)}]"}
             };
-            var ret = await Request(path, body).Into(new { Songs = default(List<SongDetail>) });
-            return Utility.AssertNotNull(ret?.Songs);
+            var ret = await Request(path, body).Into(new { Songs = default(List<Song>) });
+            return Utility.AssertNotNull(ret.Songs);
         }
 
-        public async Task<Album> AlbumDetailAsync(long Id)
+        public async Task<(Album, List<Song>)> AlbumDetailAsync(long Id)
         {
-            var path = $"/weapi/v1/album/{Id}";
-            var ret = await Request(path).Into(new { Album = default(Album), Songs = default(List<SongDetail>) });
-            if (ret?.Album != null)
+            var path = "/eapi/album/v3/detail";
+            var body = new Dictionary<string, object>
             {
-                ret.Album.Songs = ret.Songs ?? new List<SongDetail>();
-                return ret.Album;
-            }
-            throw new NullReferenceException();
+                {"id", Id }
+            };
+            // Song will lack the privilege property.
+            var ret = await Request(path, body).Into(new { Album = default(Album), Songs = default(List<Song>) });
+            return (Utility.AssertNotNull(ret.Album), Utility.AssertNotNull(ret.Songs));
+        }
+
+        public async Task<List<Privilege>> AlbumPrivilegeAsync(long Id, int offset = 0, int limit = 500)
+        {
+            var path = "/eapi/album/privilege";
+            var body = new Dictionary<string, object>
+            {
+                {"id", Id },
+                {"offset", offset },
+                {"total", "true" },
+                { "limit", limit }
+            };
+            var ret = await Request(path, body).Into(new { Data = default(List<Privilege>) });
+            return Utility.AssertNotNull(ret.Data);
         }
 
         public async Task<List<Album>> ArtistAlbumAsync(long Id, int offset = 0, int limit = 30)
@@ -295,18 +311,18 @@ namespace MusicSDK.Netease
             return Utility.AssertNotNull(ret);
         }
 
-        public async Task<List<SongDetail>> ArtistTopSongsAsync(long Id)
+        public async Task<List<Song>> ArtistTopSongsAsync(long Id)
         {
             var path = "/weapi/artist/top/song";
             var body = new Dictionary<string, object> {
                 {"id", Id}
             };
-            var ret = await Request(path, body).Into(new { Songs = default(List<SongDetail>) });
+            var ret = await Request(path, body).Into(new { Songs = default(List<Song>) });
             return Utility.AssertNotNull(ret?.Songs);
         }
 
 
-        public async Task PlaylistDetailAsync(long Id)
+        public async Task<(PlaylistDetail, List<Privilege>)> PlaylistDetailAsync(long Id)
         {
             var path = "/eapi/v6/playlist/detail";
             var body = new Dictionary<string, object>
@@ -316,13 +332,15 @@ namespace MusicSDK.Netease
                 {"n", 500},
                 {"s", 0 }
             };
-            var ret = await Request(path, body).Into(new { 
+            var ret = await Request(path, body).Into(new
+            {
                 Playlist = default(PlaylistDetail),
                 Privileges = default(List<Privilege>)
             });
+            return (Utility.AssertNotNull(ret?.Playlist), Utility.AssertNotNull(ret?.Privileges));
         }
 
-        
+
         /// <summary>
         /// unknown usage
         /// </summary>
@@ -334,7 +352,7 @@ namespace MusicSDK.Netease
                 {"resourcePosition", "playlist" },
                 {"resourceId", Id }
             };
-            var ret = await Request(path, body).Into();
+            _ = await Request(path, body).Into();
         }
         #endregion API
     }

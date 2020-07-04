@@ -7,7 +7,7 @@ namespace MusicSDK.Netease.Library
 {
     public class ResponseResolver
     {
-        Task<string> _task;
+        private readonly Task<string> _task;
         static readonly JsonSerializerSettings defaultSettings = new JsonSerializerSettings
         {
             ContractResolver = new DefaultContractResolver
@@ -23,14 +23,14 @@ namespace MusicSDK.Netease.Library
         {
             _task = task;
         }
-        public async Task<T?> Into<T>(JsonSerializerSettings? settings = null) where T : class
+        public async Task<T> Into<T>(JsonSerializerSettings? settings = null)
         {
             var str = await _task;
-            return JsonConvert.DeserializeObject<T>(str, settings ?? defaultSettings);
+            return JsonConvert.DeserializeObject<T>(str, settings ?? defaultSettings)!;
         }
 
 
-        public async Task<T?> Into<T>(T typeObject, JsonSerializerSettings? settings = null) where T : class
+        public async Task<T> Into<T>(T typeObject, JsonSerializerSettings? settings = null)
         {
             var str = await _task;
             return JsonConvert.DeserializeAnonymousType(str, typeObject, settings ?? defaultSettings);

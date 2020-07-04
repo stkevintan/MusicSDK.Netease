@@ -28,6 +28,7 @@ namespace MusicSDK.Netease.Test
             var storage = new Storage();
             var api = new NeteaseMusicSDK(storage);
             var user = api.Me ?? await api.LoginAsync(Configuration.Username, Configuration.Password);
+            Assert.IsNotNull(user);
             api.Dispose();
             api = new NeteaseMusicSDK(storage);
             Assert.IsNotNull(api.Me);
@@ -39,6 +40,7 @@ namespace MusicSDK.Netease.Test
         {
             await Context.EnsureLogined();
             var ret = await Context.Api.SearchAsync<Song>("A");
+            Assert.IsNotNull(ret);
         }
 
         [TestMethod]

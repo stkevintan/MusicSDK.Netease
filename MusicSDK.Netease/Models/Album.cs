@@ -102,32 +102,40 @@ using MusicSDK.Netease.Library;
 #nullable disable
 namespace MusicSDK.Netease.Models
 {
-    [EntityInfo(10)]
-    public class Album : BaseModel
+
+    public class AlbumBase: IBaseModel
     {
         public long Id { get; set; }
 
         public string Name { get; set; }
 
+        public string PicUrl { get; set; }
+
+        [JsonProperty(PropertyName = "tns")]
+        public List<string> TransNames { get; set; }
+    }
+
+
+    [EntityInfo(10)]
+    public class Album : AlbumBase
+    {
         public List<string> Alias { get; set; }
 
         public List<Artist> Artists { get; set; }
 
+        public string Company { get; set; }
+
+        public string BriefDesc { get; set; }
+
         [JsonConverter(typeof(DateConverter))]
         public DateTime PublishTime { get; set; }
-
-        public List<SongDetail> Songs { get; set; }
 
         public int Size { get; set; }
 
         public int Status { get; set; }
 
-        public long PicId { get; set; }
-
-        public string PicUrl { get; set; }
-
         public string Type { get; set; }
 
-        public List<string> Tns { get; set; }
+        
     }
 }
